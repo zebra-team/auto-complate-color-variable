@@ -1,0 +1,43 @@
+{
+  "name": "@zebrateam/auto-complate-color-variable",
+  "version": "1.0.0",
+  "description": "PostCSS plugin color variable, auto complate variables and support transform multi files.",
+  "keywords": [
+    "postcss",
+    "css",
+    "postcss-plugin",
+    "color",
+    "variable"
+  ],
+  "scripts": {
+    "test": "jest"
+  },
+  "main": "./src/index.js",
+  "author": "zebrateam@163.com",
+  "license": "MIT",
+  "repository": "zebra-team/auto-complate-color-variable",
+  "dependencies": {
+    "cosmiconfig": "^6.0.0",
+    "globby": "^11.0.1",
+    "optionator": "^0.9.1",
+    "postcss": "^7.0.18",
+    "postcss-less": "^3.1.4",
+    "postcss-scss": "^2.0.0"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "bin": {
+    "pcvar": "./bin/index.js"
+  }
+}
