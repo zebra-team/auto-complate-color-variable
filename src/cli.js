@@ -3,13 +3,15 @@ const optionator = require('optionator')
 const fs = require('fs')
 const postcss = require('postcss')
 const path = require('path')
+const Mustache = require('mustache')
+const prettier = require("prettier");
 const ColorVarPlugin = require('./index')
 
 const constant = require('../src/constant')
 const utils = require('../src/utils')
 const { explorerSync, getMatchFiles, splitErrorText } = utils
 
-function transform(filePath, syntax, isCheck) {
+function transform(filePath, syntax, callback) {
   const startTime = new Date().getTime();
   const content = fs.readFileSync(filePath, { encoding: 'utf-8' })
 
@@ -22,10 +24,9 @@ function transform(filePath, syntax, isCheck) {
     syntax: constant.ParserMap[syntax]
   })
     .then((result) => {
-      // 非检测模式，则写入原文件
-      if (!isCheck) {
-        fs.writeFileSync(filePath, result.content, { encoding: 'utf-8' });
-        console.log(`🌟 file => ${path.relative(process.cwd(), filePath)}, cost time => ${new Date().getTime() - startTime}ms.`);
+      if (callback && typeof callback === 'function') {
+        callback(result.content);
+        console.log(`🌟 file => ${path.relative(process.cwd(), filePath)} post css, cost time => ${new Date().getTime() - startTime}ms.`);
       }
       return {
         file: filePath,
@@ -38,14 +39,37 @@ function autoCompleVariables(loseVariables = [], variableFiles = []) {
   if (!variableFiles.length) {
     return;
   }
-  const variables = loseVariables.map((variable, i) => {
-      return /^\/\//.test(variable) ? variable : `@theme-color${i}: ${variable}`;
+
+  const variables = [...new Set(loseVariables)].map((value, i) => {
+    return /^\/\//.test(value) ? value : `@theme-color${i}: ${value}`
   });
   const filePath = path.join(process.cwd(), variableFiles[0]);
+
   if (fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, `\n${variables.join(';\n')}`, { encoding: 'utf-8', flag: 'a' });
     console.log(`\n 🚀 批量写入color变量到 “${variableFiles[0]}” 文件成功。"`);
   }
+}
+
+function writeLessFileByTpl(content, filePath, syntax, prettyCss, lessTpl) {
+  if (!content) {return;}
+  const [
+    imports,
+    basicLess,
+    colorLess,
+  ] = utils.parseColorLess(content);
+
+  const lessContent = Mustache.render(lessTpl, {
+      imports,
+      basicLessSource: basicLess.join('\n'),
+      colorLessSource: colorLess.join('\n'),
+  });
+
+  fs.writeFileSync(
+    filePath, 
+    prettyCss ? prettier.format(lessContent, { parser: syntax}) : lessContent, 
+    { encoding: 'utf-8' }
+  );
 }
 
 const options = optionator({
@@ -101,8 +125,24 @@ function run (args) {
   const root = path.join(process.cwd(), fileConfig.base || '.');
   const isCheckMode = (currentOptions.checkMode || fileConfig.checkMode) === '1';
   const autoComple = fileConfig.autoComple;
+  let cssTplPath = fileConfig.cssTplPath || path.join(__dirname, './template/less.tpl');
+  const supportCssTpl = fileConfig.supportCssTpl;
+  const prettyCss = fileConfig.prettyCss !== undefined ? fileConfig.prettyCss : true;
   let filePath = currentOptions._ && currentOptions._[0];
   let loseColorVars = [];
+
+  if (supportCssTpl) {
+    if (!path.isAbsolute(cssTplPath)) {
+      cssTplPath = path.join(process.cwd(), cssTplPath);
+    }
+    // 判断模版文件路径是否正确
+    if (!fs.existsSync(cssTplPath)) {
+      console.error(`模版文件 ${ cssTplPath } 不存在`);
+      process.exit(1)
+    }
+  }
+
+  const lessTpl = fs.readFileSync(cssTplPath, 'utf-8');
 
   if (!filePath) {
     const modules = currentOptions.modules || fileConfig.modules;
@@ -112,8 +152,20 @@ function run (args) {
       console.error('指定一个文件或者指定匹配规则(modules)。');
       process.exit(1)
     }
+
     const transPromises = files.map(file => {
-        return transform(file, syntax, isCheckMode);
+        return transform(file, syntax, (content) => {
+            if (!isCheckMode) {
+              if (supportCssTpl) {
+                writeLessFileByTpl(content, file, syntax, prettyCss, lessTpl);
+              } else {
+                fs.writeFileSync(
+                  file, 
+                  prettyCss ? prettier.format(content, {parser: syntax}) : content, 
+                  { encoding: 'utf-8' });
+              }
+            }
+        });
     });
     Promise.all(transPromises).then((results) => {
       const messages = results.filter(res => {
@@ -121,16 +173,16 @@ function run (args) {
       }).map((info, i) => {
 
         const errorFile = path.relative(root, info.file);
-        loseColorVars.push(`// ${errorFile}`);
-
+        let errorArr = new Array(`// ${errorFile}`);
         const errorInfos = info.errors.map((error, i) => {
-          const text = error.text;
+          const { text, line, column } = error;
           // 组装异常信息
-          loseColorVars.push(...splitErrorText(text));
-          return `       <${i + 1}>. ${text}, line: ${error.line}, column: ${error.column}`;
+          errorArr.push(...splitErrorText(text));
+          return `       <${i + 1}>.${text}, line: ${line}, column: ${column}`;
         });
 
-        errorInfos.unshift(`\n⚡️ ${i + 1}. "${errorFile}", errors =>`);
+        loseColorVars.push(...new Set(errorArr));
+        errorInfos.unshift(`\n⚡️ ${i + 1}. "${errorFile}" =>>>`);
 
         return errorInfos;
       });
@@ -142,13 +194,13 @@ function run (args) {
         });
 
         msgs.push('\n🐞 Undeclared variable colors: \n', ...loseColorVars);
-        console.error(`${msgs.join('\n\r')}`);
+        console.log(`${msgs.join('\n\r')}`);
         // 自动生成随机变量定义
         if (isCheckMode && autoComple) {
           autoCompleVariables(loseColorVars, fileConfig.variableFiles);
         }
       }
-      process.exit(1);
+      process.exit();
     }).catch(e => {
       console.error(`🐞批量转换过程中发生异常，详情：${e.message}。`);
       process.exit(1);
@@ -167,7 +219,19 @@ function run (args) {
       console.error(`${ filePath } 必须是一个文件`);
       process.exit(1)
     }
-    transform(filePath, syntax, isCheckMode).then((results) => {
+
+    transform(filePath, syntax, (content) => {
+      if (!isCheckMode) {
+        if (supportCssTpl) {
+          writeLessFileByTpl(content, filePath, syntax, prettyCss, lessTpl);
+        } else {
+          fs.writeFileSync(
+            filePath, 
+            prettyCss ? prettier.format(content, {parser: syntax}) : content, 
+            { encoding: 'utf-8' });
+        }
+      }
+    }).then((results) => {
       const errors = results[0].errors;
       if (errors.length) {
         console.error(errors);

@@ -4,6 +4,34 @@ const path = require('path')
 const utils = require('../src/utils')
 const constant = require('../src/constant')
 
+// describe('test parseColorCss', () => {
+//   it('should return color css body', () => {
+//     const result = utils.parseColorCss(`
+// a {
+//   color: red;
+//   background: @short-hex;
+
+//   b {
+//     color: blue;
+//     background: @link-color;
+//     width: 50px;
+//     height: 30px;
+//     border: 1px solid @short-hex;
+//   }
+// }
+//       `, false);
+//     expect(result).toBe(`
+// a {
+
+//   b {
+//     width: 50px;
+//     height: 30px;
+//   }
+// }
+//   `)
+//   })
+// });
+
 describe('test parseColor', () => {
   it('should return SHORTCUT_HEX type', () => {
     expect(utils.parseColor('#0a1')).toEqual(utils.appendId({

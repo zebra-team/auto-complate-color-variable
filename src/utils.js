@@ -286,6 +286,51 @@ function splitErrorText(text) {
     return t.startsWith('rgb') ? [t] : t.split(',');
 }
 
+/**
+ * 获取样式中color相关css。
+ * @param {String} style 
+ * @param {Boolean} [reverse=false] 
+ */
+function parseColorCss(style, reverse = false) {
+  const cssArr = style.split('\n');
+  const matchStyle =  cssArr.filter((text) => {
+    const colorRegex = /^(color|background|border)/g;
+    const rtext = text.trim();
+    return !rtext || (reverse ? !colorRegex.test(rtext) : colorRegex.test(rtext) || /({|})$/.test(rtext));
+  });
+  return matchStyle.join('\n');
+}
+
+function parseColorLess(style) {
+  const imports = [], basicLess = [], colorLess = [];
+  const cssMap = style.split('\n');
+  cssMap.forEach((css) => {
+    const trimText = css.trim();
+    if (/^(@import)/.test(trimText)) {
+      imports.push(css);
+    } else {
+      if (!trimText) {
+        basicLess.push(css);
+        colorLess.push(css);
+      } else {
+        const isColorCss = /^(color|background|border)/g.test(trimText);
+        if (!isColorCss) {
+          basicLess.push(css);
+        }
+        if (isColorCss || /({|})$/.test(trimText)) {
+          colorLess.push(css);
+        }
+      }
+    }
+  });
+
+  return [
+    imports,
+    basicLess,
+    colorLess,
+  ];
+}
+
 const ConfigFileName = 'colorvar'
 const explorerSync = cosmiconfigSync(ConfigFileName)
 
@@ -300,4 +345,6 @@ module.exports = {
   explorerSync,
   getMatchFiles,
   splitErrorText,
+  parseColorCss,
+  parseColorLess,
 }
