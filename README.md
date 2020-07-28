@@ -47,10 +47,10 @@ npm install @zebrateam/auto-complate-color-variable -g
 | alias | 等同于 webpack 中的alias | Object | {} |
 | base | 基础路径，modules匹配时扫描进入目录 | String | '' |
 | autoComple | 是否自动补全缺失color变量，checkMode为‘1’时有效 | Boolean | false |
-| usingAlias | 自动导入 variableFile 时，使用 alias ，例如 @import '~@/src/color.less' | String | '' |
+| usingAlias | 自动导入 variableFile 时，使用 alias ，<br>例如 @import '~@/src/color.less' | String | '' |
 | singleQuote | 自动导入时是否使用单引号， 默认 false | Boolean | false |
 | checkMode | 是否为检测模式，为‘1’时，只检测缺失定义color变量 | Boolean | '0' |
-| cssTplPath | 转换color为变量，提取支持多主题模版的路径（可以根目录相对路径文件） | String | './template/less.tpl' |
+| cssTplPath | 转换color为变量，提取支持多主题模版的路径<br>（可以根目录相对路径文件） | String | './template/less.tpl' |
 | supportCssTpl | 是否选择css模版来转换样式 | Boolean | false |
 | prettyCss | 是否美化代码 | Boolean | true |
 
@@ -61,7 +61,7 @@ npm install @zebrateam/auto-complate-color-variable -g
 | syntax | 语法: 支持 less 和 scss , 默认less | String | 's' | false | pcvar ./index.less --syntax less |
 | base | 定义基础路径，用来批量转换多个文件 | String | 'b' | false | pcvar --base src | 
 | modules | 定义匹配文件规则 | String | 'm' | false | pcvar --modules "**/*.less" |
-| checkMode | 检测是否缺失color未定义变量(1: 检测；0: 不检测，检测模式时，不自动写入转换less文件) | String | 'c' | false | pcvar --modules "**/*.less" --checkMode=1 |
+| checkMode | 检测是否缺失color未定义变量<br>(1: 检测；0: 不检测，检测模式时，不自动写入转换less文件) | String | 'c' | false | pcvar --modules "**/*.less" --checkMode=1 |
 
 
 ## 项目应用

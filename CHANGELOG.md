@@ -1,5 +1,10 @@
 # 变更日志
 
+## v0.1.4 (2020-07-29)
+
+* 优化功能：
+    - variableFiles定义文件不存在时，自动创建文件[#issue-3](https://github.com/zebra-team/auto-complate-color-variable/issues/3#issue-666819416)；
+
 ## v0.1.3 (2020-07-28)
 
 * 修复问题：

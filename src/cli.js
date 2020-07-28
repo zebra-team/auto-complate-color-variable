@@ -37,6 +37,7 @@ function transform(filePath, syntax, callback) {
 
 function autoCompleVariables(loseVariables = [], variableFiles = []) {
   if (!variableFiles.length) {
+    console.error('🐞请在.colorvarrc.json中定义variableFiles。');
     return;
   }
 
@@ -45,10 +46,8 @@ function autoCompleVariables(loseVariables = [], variableFiles = []) {
   });
   const filePath = path.join(process.cwd(), variableFiles[0]);
 
-  if (fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, `\n${variables.join(';\n')}`, { encoding: 'utf-8', flag: 'a' });
-    console.log(`\n 🚀 批量写入color变量到 “${variableFiles[0]}” 文件成功。"`);
-  }
+  fs.appendFileSync(filePath, `\n${variables.join(';\n')}`, { encoding: 'utf-8', flag: 'a' });
+  console.log(`\n 🚀 批量写入color变量到 “${variableFiles[0]}” 文件成功。"`);
 }
 
 function writeLessFileByTpl(content, filePath, syntax, prettyCss, lessTpl) {
