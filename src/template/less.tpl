@@ -2,11 +2,11 @@
 {{&.}}
 {{/imports}}
 
-{{basicLessSource}}
+{{&basicLessSource}}
 
 .add-prefix(@theme) {
     .eui-theme-@{theme} {
-        {{colorLessSource}}
+        {{&colorLessSource}}
     }
 }
 

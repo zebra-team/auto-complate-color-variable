@@ -1,5 +1,10 @@
 # 变更日志
 
+## v0.1.3 (2020-07-28)
+
+* 修复问题：
+    - 修复模版解析时，符号被转译[#issue-1](https://github.com/zebra-team/auto-complate-color-variable/issues/1#issue-666692224)； 
+
 ## v0.1.2 (2020-07-27)
 
 * 新增特性：
